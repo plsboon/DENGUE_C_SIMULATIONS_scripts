@@ -1,0 +1,24 @@
+Command for displaying the queue:
+qsr
+qs
+
+Equilibrating the protein into water:
+vi gmx_eq.job 
+vi eq_1000.mdp 
+vi eq_500.mdp 
+vi eq_100.mdp 
+vi eq_50.mdp 
+vi eq_10.mdp 
+vi eq_0.mdp 
+qsub gmx_eq.job
+
+Setting up a simulation:
+vi dyn.mdp 
+~/SOFTWARE/gromacs/bin/gmx grompp -f dyn.mdp -c eq_0.gro -p topol -o dyn.tpr
+vi gmx_gpu.job 
+qsub gmx_gpu.job 
+qsr
+
+for i in  `cat list`; do cd $i; qsub gmx_gpu.job; cd ..; done
+
+

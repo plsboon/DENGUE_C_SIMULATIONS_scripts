@@ -1,0 +1,479 @@
+###############################
+#Using the CHARMM36 forcefield#
+###############################
+Step 1:
+gmx pdb2gmx -f <something.pdb> 
+
+options:
+10 # CHARMM36
+1 # TIP3Pll
+
+Step 2:
+gmx editconf -f conf.gro -box 7 7 7 -o box.gro 
+# We just make the box slightly bigger the number is dependent on the system in question
+
+Step 3:
+gmx solvate -cp box.gro -cs spc216.gro -p topol.top -o solv.gro
+
+Step 4:
+gmx grompp -f min.mdp -c solv.gro -p topol.top -o min.tpr
+gmx mdrun -v -deffnm min
+
+Step 5:
+#Check the total charge on the protein and add ions to make the system neutral. 
+./ionize.py min.gro 20 66 > min_ions.gro
+
+Step 6:
+#Edit the topol.top file to have only chainA x2
+mv posre_Protein_chain_A.itp posre_DENV2_CAPSID.itp #Example
+mv topol_Protein_chain_A.itp topol_DENV2_CAPSID.itp #Example
+rm topol_Protein_chain_B.itp posre_Protein_chain_B.itp
+
+vi topol.top #Change Chain A to DENV2_CAPSID x2 and rm Chain B 
+vi topol_DENV2_CAPSID.itp # change Chain A to DENV2_CAPSID at the beginning and end.
+
+vi posre_DENV2_CAPSID.itp 
+#change 1000.0 to POSRES_FC so that we can change it as we equil by using the :%s/ 1000/POSRES_FC/g
+#Append the below to the file
+
+#ifndef POSRES_FC
+#define POSRES_FC 1000.0
+#endif
+ 
+Step 7:
+#Minimize again but with the ionized version
+gmx grompp -f min.mdp -c min_ions.gro -p topol.top -o min_ionized.tpr
+gmx mdrun -v -deffnm min_ionized
+
+Step 8:
+#Make the quilibration runs
+cp eq_XXXX.mdp
+./make_eq.sh
+
+Step 9:
+#Transfer to NSCC to start eqilibration runs
+#use the gmx_eq.job to run the equilibrations
+Transfer the following:
+min_ionized.gro
+topol.top
+eq_*.mdp
+
+Step 10:
+qsub gmx_eq.job
+
+#################################
+#Using the AMBER14SB Force field#
+#################################
+All files within the DENV*a file will be run using this forcefield
+
+
+options:
+2 # AMBER14SB
+1 # TIP3Pll
+
+cat << EOF > amber_inp
+2
+1
+EOF
+gmx pdb2gmx -f *.pdb < amber_inp 
+
+gmx editconf -f conf.gro -box 7 7 7 -o box.gro 
+gmx solvate -cp box.gro -cs spc216.gro -p topol.top -o solv.gro
+gmx grompp -f min.mdp -c solv.gro -p topol.top -o min.tpr
+gmx mdrun -v -deffnm min
+./ionize.py min.gro 20 66 > min_ions.gro
+
+rm topol_Protein_chain_B.itp posre_Protein_chain_B.itp
+mv posre_Protein_chain_A.itp posre_DENV2_CAPSID.itp #Example
+mv topol_Protein_chain_A.itp topol_DENV2_CAPSID.itp #Example
+vi topol.top #Change Chain A to DENV2_CAPSID x2 and rm Chain B 
+vi topol_DENV2_CAPSID.itp # change Chain A to DENV2_CAPSID at the beginning and end.
+vi posre_DENV2_CAPSID.itp 
+#change 1000.0 to POSRES_FC so that we can change it as we equil by using the :%s/ 1000/POSRES_FC/g
+#Append the below to the file
+
+#ifndef POSRES_FC
+#define POSRES_FC 1000.0
+#endif
+ 
+gmx grompp -f min.mdp -c min_ions.gro -p topol.top -o min_ionized.tpr
+gmx mdrun -v -deffnm min_ionized
+cp eq_XXXX.mdp
+./make_eq.sh
+
+Step 9:
+#Transfer to NSCC to start eqilibration runs
+#use the gmx_eq.job to run the equilibrations
+Transfer the following:
+min_ionized.gro
+topol.top
+eq_*.mdp
+
+Step 10:
+qsub gmx_eq.job
+
+######################################
+#Using the GROMOSS96 54a7 Force field#
+######################################
+All files within the DENV*b file will be run using this forcefield
+
+
+options:
+16 # GROMOS96 54a7
+1 # TIP3Pll
+
+cat << EOF > gromos_inp
+16
+1
+EOF
+gmx pdb2gmx -f *.pdb < gromos_inp 
+
+gmx editconf -f conf.gro -box 7 7 7 -o box.gro 
+gmx solvate -cp box.gro -cs spc216.gro -p topol.top -o solv.gro
+gmx grompp -f min.mdp -c solv.gro -p topol.top -o min.tpr
+gmx mdrun -v -deffnm min
+./ionize.py min.gro 20 66 > min_ions.gro
+
+rm topol_Protein_chain_B.itp posre_Protein_chain_B.itp
+mv posre_Protein_chain_A.itp posre_DENV2_CAPSID.itp #Example
+mv topol_Protein_chain_A.itp topol_DENV2_CAPSID.itp #Example
+vi topol.top #Change Chain A to DENV2_CAPSID x2 and rm Chain B 
+vi topol_DENV2_CAPSID.itp # change Chain A to DENV2_CAPSID at the beginning and end.
+vi posre_DENV2_CAPSID.itp 
+#change 1000.0 to POSRES_FC so that we can change it as we equil by using the :%s/ 1000/POSRES_FC/g
+#Append the below to the file
+
+#ifndef POSRES_FC
+#define POSRES_FC 1000.0
+#endif
+ 
+gmx grompp -f min.mdp -c min_ions.gro -p topol.top -o min_ionized.tpr
+gmx mdrun -v -deffnm min_ionized
+cp eq_XXXX.mdp
+./make_eq.sh
+
+Step 9:
+#Transfer to NSCC to start eqilibration runs
+#use the gmx_eq.job to run the equilibrations
+Transfer the following:
+min_ionized.gro
+topol.top
+eq_*.mdp
+
+Step 10:
+qsub gmx_eq.job
+
+
+(9.2 nm) ^ 3 *0.1 mol/l * 6.022e23/mol
+
+######################
+#Capsid RNA structure#
+######################
+Firstly align the dengue capsids using :
+
+gmx confrms -f1 ../DENV1.1_complex/inpalg.pdb -f2 DENV2_inp.pdb -o DENV2_inpalg.pdb
+ -n1 ../DENV1.1_complex/index.ndx -n2 index.ndx -no one
+
+*Because output is pdb it will write the superimposition of the models. Need to delete the reference structure which so happens to be the first model. 
+
+*Then cat the DENVXXX_inpalg.pb ../DENV1.1_complex/inpalg.pdb > newcmp.pdb
+
+gmx editconf -f newcmp -o newcmp.gro -bt dodecahedron -d 1.0 -o box.conf
+
+*copy all the topology and posre file to the current directory
+
+gmx solvate -cs spc216.gro -cp box.conf -p topol.top -o solv.gro
+
+gmx grompp -f min.mdp -c solv.gro -p topol.top -o min.tpr
+
+gmx mdrun -v -deffnm min
+
+*ionize the system
+
+gmx grompp -f min.mdp -c min_ions.gro -p topol.top -o min_ionized.tpr
+gmx mdrun -v -deffnm min_ionized
+cp eq_XXXX.mdp
+./make_eq.sh
+
+#########################
+#make DENV1-3 index file#
+#########################
+
+for i in DENV1 DENV2 DENV3 DENV1a DENV2a DENV3a DENV1b DENV2b DENV3b 
+do 
+cd $i
+cat << EOF > make_ndx_inp
+ri 1-100
+ri 101-200
+ri 45-97 & 3
+ri 45-97 | ri 145-197 & 3
+q
+EOF
+	gmx make_ndx -f eq_0.gro -n index.ndx -o temp_index.ndx  < make_ndx_inp
+
+	sed "s/r_45-97_&_C-alpha/HalfCore/g" temp_index.ndx | sed "s/r_45-97_r_145-197_&_C-alpha/coreCA/g" | sed "s/r_1-100/ChainA/g" | sed "s/r_101-200/ChainB/g" > index_new.ndx
+rm index.ndx temp_index.ndx
+mv index_new.ndx index.ndx
+cd ..
+done
+
+########################
+#Make coreCA index file#
+########################
+
+for i in DENV4 DENV4a DENV4b 
+do 
+cd $i
+cat << EOF > make_ndx_inp
+ri 1-99
+ri 100-198
+ri 44-96 & 3
+ri 44-96 | ri 143-195 & 3
+q
+EOF
+	gmx make_ndx -f eq_0.gro -n index.ndx -o temp_index.ndx  < make_ndx_inp
+
+	sed "s/r_44-96_&_C-alpha/HalfCore/g" temp_index.ndx | sed "s/r_44-96_r_143-195_&_C-alpha/coreCA/g" | sed "s/r_1-99/ChainA/g" | sed "s/r_100-198/ChainB/g" > index_new.ndx
+rm index.ndx temp_index.ndx
+mv index_new.ndx index.ndx
+cd ..
+done
+
+##################
+#Make projections#
+##################
+for i in `seq -w 1 10`
+do 
+cat << EOF > inp
+coreCA
+coreCA
+EOF
+	gmx anaeig -f dyn_alg.xtc -s dyn.tpr -n index.ndx -v eigenvec.trr -eig eigenval.xvg -proj proj_vec_$i.xvg -first $i -last $i < inp 
+done
+
+##################
+#PMF Calculations#
+##################
+
+Step 1. Extract the latest DENV_RNA simulation frame and use creat a .gro file
+Step 2. Import topology and posres files from the MD simulation folder
+#ifdef POSRES_DENV
+#include "posre_DENV.itp"
+#endif
+
+put that in the topol_DENV.itp file
+
+Step 3. Define the PBC box
+Step 4. Solvate the box and add ions
+gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr
+gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral -conc 0.1
+
+Step 5. Energy Minimization
+Step 6. Equilibrations
+Step 7. Generate the pulling configurations
+
+gmx grompp -f pmf_pull.mdp -c eq_0.gro -p topol.top -n index.ndx -o pmf_pull.tpr
+gmx mdrun -deffnm pmf_pull
+
+*Important thing to note that I use constraints on all bonds so that i can speed up and take 2fs timesteps.
+
+Step 8. Check the pulling graphs
+Step 9. Align the frames and extract the configurations
+
+gmx trjconv -f pmf_pull.xtc -s pmf_pull.tpr -n index.ndx -pbc mol -ur compact -o pmf_pull_pbc.xtc
+gmx trjconv -f pmf_pull_pbc.xtc -s pmf_pull.tpr -n index.ndx -fit rot+trans -o pmf_pull_alg.xtc -tu ps 
+
+gmx trjconv -s pmf_pull.tpr -f pmf_pull_alg.xtc -o conf.gro -sep -n index.ndx
+
+
+for i in `seq 0 500`
+do 
+	gmx distance -s ../pmf_pull.tpr -f conf$i.gro -n ../index.ndx -oall dist$i.xvg -select 'com of group "Protein" plus com of group "RNA"'
+d
+
+Step 10. Get a summary of the distances
+
+./distance.pl
+
+*Need to remember to change the number of frames used for each project
+
+Step 11. Generating the conformations
+./pmf_pull_setup.py summary_distances.dat 0.1 2.625 7.75
+
+Using the summary of the calculations of the COM distances and using a 0.1 window starting from 2.625 (smaller than the starting binding distance) up to 7.75
+
+Step 12. Get the conformations and minimize each of them before performing umbrella sampling.
+
+Step 13. Run the production MD 
+
+Step 14. Analysis
+gmx wham -it tpr-files.dat -if pullf-files.dat -o -hist -unit kCal
+
+Because the pmf runs went on longer than a day and only managed to acheive 5ns a day and each run was 10ns i had to -noappend to continue the mdrun. Resulting in parts of pullf.xvg files. Inorder to concatenate them I googled around and found this one liner that gets rid of duplicated lines but takes the first one it sees:
+
+awk '{if (!a[$1]++) print}' files*
+
+Explanation of this one liner on stackexchange:
+#################################################################################
+#Let's see,
+#
+# !a[$0]++
+#
+#first
+#
+# a[$0]
+#
+#we look at the value of a[$0] (array a with whole input line ($0) as key).
+#
+#If it does not exist ( ! is negation in test will eval to true)
+#
+# !a[$0]
+#
+#we print the input line $0 (default action).
+#
+#Also, we add one ( ++ ) to a[$0], so next time !a[$0] will evaluate to false.
+#
+#http://unix.stackexchange.com/questions/159695/how-does-awk-a0-work
+################################################################################
+
+My short script ot generate the complete files:
+for i in `seq 0 50`
+do 
+b=`echo pmf_prod_$i{"_","."}*pullf.xvg`
+echo $b
+awk '{if (!a[$1]++) print}' $b > pmf_prod_$i"_complete_pullf.xvg" 
+echo pmf_prod_$i"_complete_pullf.xvg"
+done
+
+
+###################################################
+#Making index files for hydrophobic surface groove#
+###################################################
+
+for i in `cat list`
+do 
+cd $i
+cat << EOF > inp
+ri 46 | ri 50 | ri 53 | ri 54 | ri 57 | ri 146| ri 150| ri 153| ri 154| ri 157
+q
+EOF
+  gmx make_ndx -f eq_0.gro -n index.ndx -o index_temp.ndx < inp
+cd ..
+done
+
+for i in `cat list`
+do 
+cd $i
+sed "s/r_46_r_50_r_53_r_54_r_57_r_146_r_150_r_153_r_154_r_157/hydrophobic_res_inner_surface/g" index_temp.ndx > index_new.ndx
+rm index_temp.ndx index.ndx
+mv index_new.ndx index.ndx
+cd ..
+done
+
+for i in `cat list` 
+do 
+cd $i
+cat << EOF > inp
+ri 45 | ri 49 | ri 52 | ri 53 | ri 56 | ri 144| ri 148| ri 151| ri 152| ri 155
+q
+EOF
+  gmx make_ndx -f eq_0.gro -n index.ndx -o index_temp.ndx < inp
+cd ..
+done
+
+
+for i in `cat list`
+do 
+cd $i
+sed "s/r_45_r_49_r_52_r_53_r_56_r_144_r_148_r_151_r_152_r_155/hydrophobic_res_inner_surface/g" index_temp.ndx > index_new.ndx
+rm index_temp.ndx index.ndx
+mv index_new.ndx index.ndx
+cd ..
+done
+
+#############################
+#Notes for analysis of DENVC#
+#############################
+
+To split RMSD and RMSF 
+
+use block_split_trajectory.sh
+*Also splits the trajectories into blocks with increasing time i.e.(0-20%,0-40%,0-60% ...)
+
+The whole things can be plotted using this:
+
+for i in `cat list`
+do 
+echo $i
+cd $i
+../block_split_trajectory.sh
+../block_analyze_rmsd_rmsf.sh
+../block_analyze_plot_rmsf.py
+echo "done!"
+cd ..
+done
+
+for i in DENV1 DENV2 DENV3 DENV4; do echo $i; cd $i; ../block_analyze_plot_rmsf.py -f rmsf_dyn_alg_0_200ns.xvg rmsf_dyn_alg_0_400ns.xvg rmsf_dyn_alg_0_600ns.xvg rmsf_dyn_alg_0_800ns.xvg rmsf_dyn_alg.xvg -lab "0-20% simulation time" "0-40% simulation time" "0-60% simulation time" "0-80% simulation time" "0-100% simulation time" -title CHARMM36; convert RMSF_blockwise.svg RMSF_blockwise.png; cd ..; done
+
+for i in DENV1a DENV2a DENV3a DENV4a; do echo $i; cd $i; ../block_analyze_plot_rmsf.py -f rmsf_dyn_alg_0_200ns.xvg rmsf_dyn_alg_0_400ns.xvg rmsf_dyn_alg_0_600ns.xvg rmsf_dyn_alg_0_800ns.xvg rmsf_dyn_alg.xvg -lab "0-20% simulation time" "0-40% simulation time" "0-60% simulation time" "0-80% simulation time" "0-100% simulation time" -title AMBER14; convert RMSF_blockwise.svg RMSF_blockwise.png; cd ..; done
+
+for i in DENV1b DENV2b DENV3b DENV4b; do echo $i; cd $i; ../block_analyze_plot_rmsf.py -f rmsf_dyn_alg_0_200ns.xvg rmsf_dyn_alg_0_400ns.xvg rmsf_dyn_alg_0_600ns.xvg rmsf_dyn_alg_0_800ns.xvg rmsf_dyn_alg.xvg -lab "0-20% simulation time" "0-40% simulation time" "0-60% simulation time" "0-80% simulation time" "0-100% simulation time" -title GROMOS96; convert RMSF_blockwise.svg RMSF_blockwise.png; cd ..; done
+
+for i in DENV1c DENV2c DENV3c DENV4c; do echo $i; cd $i; ../block_analyze_plot_rmsf.py -f rmsf_dyn_alg_0_200ns.xvg rmsf_dyn_alg_0_400ns.xvg rmsf_dyn_alg.xvg -lab "0-200ns of simulation time" "0-400ns of simulation time" "0-100% simulation time" -title AMBER14SB; convert RMSF_blockwise.svg RMSF_blockwise.png; cd ..; done
+
+for i in DENV1.1_complex DENV2.1_complex DENV3.1_complex DENV4.1_complex; do echo $i; cd $i; ../block_analyze_plot_rmsf.py -f rmsf_dyn_alg_0_200ns.xvg rmsf_dyn_alg_0_400ns.xvg rmsf_dyn_alg.xvg -lab "0-200ns of simulation time" "0-400ns of simulation time" "0-100% simulation time" -title "DENVC and RNA"; convert RMSF_blockwise.svg RMSF_blockwise.png; cd ..; done
+
+
+for i in DENV1.1_complex DENV2.1_complex DENV3.1_complex DENV4.1_complex; do echo $i; cd $i; ../block_split_trajectory.sh; ../block_analyze_rmsd_rmsf.sh; ../block_analyze_plot_rmsf.py -f rmsf_dyn_alg_0_200ns.xvg rmsf_dyn_alg_0_400ns.xvg rmsf_dyn_alg.xvg -lab "0-200ns of simulation time" "0-400ns of simulation time" "0-100% simulation time" -title "DENVC and RNA"; convert RMSF_blockwise.svg RMSF_blockwise.png; cd ..; done
+
+
+to analyze the radius of gyration 
+firstly need to generate the Rg file:
+
+for i in DENV1.1_complex DENV2.1_complex DENV3.1_complex DENV4.1_complex
+do 
+echo $i
+cd $i
+#rm dyn_radius_gyration.xvg dyn_radius_gyration_core.xvg
+cat << EOF > inp
+Protein
+EOF
+ #gmx gyrate -f dyn_alg.xtc -s dyn.tpr -n index.ndx -o dyn_radius_gyration.xvg < inp
+gmx gyrate -f dyn_alg.xtc -s dyn_long.tpr -n index.ndx -o dyn_radius_gyration.xvg < inp
+
+cd ..
+done
+ 
+
+Then use the program I made called block_analyze_plot_gyration.py
+
+for i in DENV1 DENV2 DENV3 DENV4
+do  ./block_analyze_plot_gyration.py -f $i/dyn_radius_gyration.xvg $i"a/dyn_radius_gyration.xvg" $i"b/dyn_radius_gyration.xvg" $i"c/dyn_radius_gyration.xvg" $i".1_complex/dyn_radius_gyration.xvg" -lab CHARMM36 AMBER14 GROMOS96 AMBER14SB DENVC_RNA -title $i -c $i"_structure/"$i"_model_crystal_rg.xvg" -o $i"_structure/"$i"_blockwise_gyration.svg" -log $i"_structure/"$i"_blockwise_gyration.log"
+convert $i"_structure/"$i"_blockwise_gyration.svg" $i"_structure/"$i"_blockwise_gyration.png"
+done
+
+Run the analyze_surface_groove.sh script 
+
+The use this:
+for i in DENV1 DENV2 DENV3 DENV4
+do  ./block_analyze_plot_SASA.py -f $i/hydrophobic_surface_groove_volume.xvg $i"a/hydrophobic_surface_groove_volume.xvg" $i"b/hydrophobic_surface_groove_volume.xvg" $i"c/hydrophobic_surface_groove_volume.xvg" $i".1_complex/hydrophobic_surface_groove_volume.xvg" -l CHARMM36 AMBER14 GROMOS96 AMBER14SB DENVC_RNA -title $i -c $i"_structure/"$i"_hydrophobic_surface_groove_volume.xvg" -o $i"_structure/"$i"_blockwise_SASA.svg" -log $i"_structure/"$i"_blockwise_SASA.log"
+convert $i"_structure/"$i"_blockwise_SASA.svg" $i"_structure/"$i"_blockwise_SASA.png"
+done
+
+
+##################
+#Cluster analysis#
+##################
+
+Get the C-alpha trajectory from the aligned trajectories:
+
+gmx trjconv -f dyn_alg.xtc -s dyn.tpr -o dyn_alg_C_alpha.xtc
+
+Get the structure of the C-alpha atoms:
+
+gmx editconf -f eq_0.gro -o eq_0_c_alpha.gro -n index.ndx
+
+concatenate the trajectories:
+gmx trjcat -f ../../DENV1/dyn_alg_C_alpha.xtc ../../DENV1a/dyn_alg_C_alpha.xtc ../../DENV1b/dyn_alg_C_alpha.xtc -settime -o DENV1_dyn_alg.xtc
+
+
